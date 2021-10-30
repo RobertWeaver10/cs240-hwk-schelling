@@ -24,33 +24,35 @@ function createTable (){
     for (let i = 0; i < tableDimensionsVal; i++){
         distTable[i] = new Array(tableDimensionsVal);
     }
-    var vacantSpots = Math.floor((tableDimensionsVal**2) * vacancy);
-    var populationX = Math.floor((tableDimensionsVal**2) * popSplit);
-    var populationY = Math.floor((tableDimensionsVal**2) - (vacantSpots + populationX));
+    console.log("population x color: " + popXColor);
+    console.log("population Y color: " + popYColor);
 
-    console.log("vacantSpots: " + vacantSpots);
-    console.log("populationX: " + populationX);
-    console.log("populationY: " + populationY);
     for (var i = 0; i < tableDimensionsVal; i++){   //for every row
         for (var j = 0; j < tableDimensionsVal; j++){  //for every column
             let rng = Math.floor((Math.random() * 100)); //get a random # between 0-99
+        
             if (rng < vacancy * 100){ //if the random number is less than just the vacancy then it is a vacant spot
                 //do nothing this spot in the table will be vacant
+                console.log("stored at " + i + ", " + j + ": " + distTable[i][j]);
             }
-            else if (rng > (vacancy * 100) && rng <= ((vacancy + popSplit) * 100)){
+            else if (rng > vacancy * 100 && rng <= (+vacancy + +popSplit) * 100){ //bug here
                 distTable[i][j] = popXColor; //if the random number is in the range between vacancy + popSplit then we assign
-            }                                //the population X color
+                console.log("stored at " + i + ", " + j + ": " + distTable[i][j]); //population x color
+            }
             else{
                 distTable[i][j] = popYColor; //otherwise store the population y color
+                console.log("stored at " + i + ", " + j + ": " + distTable[i][j]);
             }
         }
     }
+
+    //may be a bug here when assigning colors
     let tableNode = document.createElement('table'); //create an html table element
     for (var i = 0; i < tableDimensionsVal; i++){   //for each row in the array create a new table row element
         var rowNode = document.createElement('tr');
         for (var j = 0; j < tableDimensionsVal; j++){ //for each data slot in the array create a new table data element
             var dataNode = document.createElement('td');
-            dataNode.style.color = distTable[i][j]; //set the color of the dataNode to the appropriate color
+            dataNode.style.backgroundColor = distTable[i][j]; //set the color of the dataNode to the appropriate color
             rowNode.appendChild(dataNode);  //append the data to the row
         }
         tableNode.appendChild(rowNode); //append the row to the table
@@ -59,8 +61,3 @@ function createTable (){
 }
 
 createTable();
-tableDimensions.addEventListener('change', () => {
-    tableDimensionsVal = tableDimensions.value;
-    console.log("new table dimensions: " + tableDimensionsVal);
-    createTable();
-});
