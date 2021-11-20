@@ -5,7 +5,7 @@
 
 //query selectors for the elements
 let tableDimensions = document.querySelector('#dimension');
-let simThresholdField = document.querySelector(`#threshold`);
+let simThresholdField = document.querySelector(`#threshold`); //how similar does an agent's neighbors have to be
 let vacancyField = document.querySelector(`#vacantRatio`);
 let popSplitField = document.querySelector(`#popRatio`);
 let popXColorField = document.querySelector(`#popXcolor`);
@@ -72,12 +72,12 @@ createTable();
 
 tableDimensions.addEventListener("change", () => {
     document.getElementById("board").innerHTML = "";
-    simThreshold = document.querySelector('#threshold').value;
-    vacancy = document.querySelector('#vacantRatio').value;
-    popSplit = document.querySelector('#popRatio').value;
-    popXColor = document.querySelector('#popXcolor').value;
-    popYColor = document.querySelector('#popYcolor').value;
+    tableDimensionsVal = tableDimensions.value;
     createTable();
+});
+
+simThresholdField.addEventListener("change", () => {
+    simThreshold = simThresholdField.value;
 });
 
 popXColorField.addEventListener("change", () => {
@@ -133,3 +133,39 @@ popYColorField.addEventListener("change", () => {
     document.getElementById("board").innerHTML="";
     document.getElementById("board").appendChild(tableNode);    //append table to html div
 });
+
+vacancyField.addEventListener("change", () => {
+    document.getElementById("board").innerHTML = "";
+    vacancy = vacancyField.value;
+    createTable();
+});
+
+popSplitField.addEventListener("change", () => {
+    document.getElementById("board").innerHTML = "";
+    popSplit = popSplitField.value;
+    createTable();
+});
+
+randButton.addEventListener("click", () => {
+    for (var i = 0; i < tableDimensions.value; i++){
+        for (var j = 0; j < tableDimensions.value; j++){
+            let temp = distTable[i][j];
+            let rngI = Math.floor((Math.random() * tableDimensions.value))
+            let rngJ = Math.floor((Math.random() * tableDimensions.value));
+            distTable[i][j] = distTable[rngI][rngJ];
+            distTable[rngI][rngJ] = temp;
+        }
+    }
+    document.getElementById("board").innerHTML = "";
+    let tableNode = document.createElement('table');            //create an html table element
+    for (var i = 0; i < tableDimensionsVal; i++){               //for each row in the array
+        var rowNode = document.createElement('tr');             //create a new table row element
+        for (var j = 0; j < tableDimensionsVal; j++){           //for each data slot in the array
+            var dataNode = document.createElement('td');        //create a new table data element
+            dataNode.style.backgroundColor = distTable[i][j];   //set the color of the dataNode to the appropriate color
+            rowNode.appendChild(dataNode);                      //append the data to the row
+        }
+        tableNode.appendChild(rowNode);                         //append the row to the table
+    }
+    document.getElementById("board").appendChild(tableNode);    //append table to html div
+})
