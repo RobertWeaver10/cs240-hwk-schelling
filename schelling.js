@@ -23,6 +23,8 @@ let popYColor = popYColorField.value;
 let tableDimensionsVal = tableDimensions.value;
 let vacantSpots = [];
 
+
+
 let distTable = new Array(tableDimensionsVal);
 for (let i = 0; i < tableDimensionsVal; i++){
     distTable[i] = new Array(tableDimensionsVal);
@@ -79,6 +81,7 @@ createTable();
 
 tableDimensions.addEventListener("change", () => {
     document.getElementById("board").innerHTML = "";
+    vacantSpots = [];
     tableDimensionsVal = tableDimensions.value;
     createTable();
 });
@@ -143,24 +146,39 @@ popYColorField.addEventListener("change", () => {
 
 vacancyField.addEventListener("change", () => {
     document.getElementById("board").innerHTML = "";
+    vacantSpots = [];
     vacancy = vacancyField.value;
     createTable();
 });
 
 popSplitField.addEventListener("change", () => {
     document.getElementById("board").innerHTML = "";
+    vacantSpots = [];
     popSplit = popSplitField.value;
     createTable();
 });
 
 randButton.addEventListener("click", () => {
+    vacantSpots = [];
     for (var i = 0; i < tableDimensions.value; i++){
         for (var j = 0; j < tableDimensions.value; j++){
             let temp = distTable[i][j];
-            let rngI = Math.floor((Math.random() * tableDimensions.value))
+            let rngI = Math.floor((Math.random() * tableDimensions.value));
             let rngJ = Math.floor((Math.random() * tableDimensions.value));
-            distTable[i][j] = distTable[rngI][rngJ];
-            distTable[rngI][rngJ] = temp;
+
+            if (temp == `#FFFFFF`){                             //if the spot we are on is vacant
+                distTable[i][j] = distTable[rngI][rngJ];        //switch with a random spot
+                distTable[rngI][rngJ] = temp;                   //set the random spot to vacant
+                let vacantIndex = {                             //create a new object that stores the index
+                    iIndex: rngI,                                  //store the i index
+                    jIndex: rngJ                                   //store the j index
+                }
+                vacantSpots.push(vacantIndex);                  //store the new vacant spot
+            }
+            else{                                               //else we don't have to update the vacant spots array
+                distTable[i][j] = distTable[rngI][rngJ];
+                distTable[rngI][rngJ] = temp;
+            }
         }
     }
     document.getElementById("board").innerHTML = "";
@@ -177,119 +195,274 @@ randButton.addEventListener("click", () => {
     document.getElementById("board").appendChild(tableNode);    //append table to html div
 })
 
+
 runButton.addEventListener("click", async () => {
-    runButton.innerHTML = "Stop";
-    console.log("running");
     let converged = 0;
     let generation = 0;
     let numMoves = 0;
     let coolNeighbors = 0;
     let totalNeighbors = 0;
-    console.log(vacantSpots);
+
+    runButton.innerHTML = "Stop";
     
     while (converged < 1){
         generationText.innerHTML = "Generations " + generation;
         numMoves = 0;
+        console.log("numMoves reset, new val: " + numMoves);
         for (var i = 0; i < tableDimensions.value; i++){
             for (var j = 0; j < tableDimensions.value; j++){
                 coolNeighbors = 0;
                 totalNeighbors = 0;
-                if (i-1<0 && j-1 < 0){//corner case (top left, -5 possible neighbors)
-                    //console.log(`this is the top left corner`);
-                    totalNeighbors = 3;
-                    if (distTable[i+1][j] == distTable[i][j]){//if the neighbor is the same increment cool neighbors
-                        coolNeighbors++;
+                if(distTable[i][j] != `#FFFFFF`){//if the slot is not already vacant
+                    if (i-1<0 && j-1 < 0){//corner case (top left, -5 possible neighbors)
+                        //console.log(`this is the top left corner`);
+                        totalNeighbors = 3;
+                        if (distTable[i+1][j] == distTable[i][j]){//if the neighbor is the same increment cool neighbors
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i+1][j] == `#FFFFFF`){ //if neighboring a vacant spot decrement total neighbors
+                            totalNeighbors--;
+                        }
+    
+                        if (distTable[i][j+1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i][j+1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+    
+                        if (distTable[i+1][j+1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i+1][j+1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
                     }
-                    else if (distTable[i+1][j] == `#FFFFFF`){ //if neighboring a vacant spot decrement total neighbors
-                        totalNeighbors--;
+                    else if (i-1<0 && j+1 == tableDimensions.value){//corner case (top right, -5 possible neighbors)
+                        //console.log(`this is the top right corner`);
+                        totalNeighbors = 3;
+                        if (distTable[i][j-1] == distTable[i][j]){//if the neighbor is the same increment cool neighbors
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i][j-1] == `#FFFFFF`){//if neighboring a vacant spot decrement total neighbors
+                            totalNeighbors--;
+                        }
+    
+                        if (distTable[i+1][j] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i+1][j] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+    
+                        if (distTable[i+1][j-1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i+1][j-1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
                     }
-
-                    if (distTable[i][j+1] == distTable[i][j]){
-                        coolNeighbors++;
+                    else if (i+1 == tableDimensions.value && j-1 < 0){//corner case (bottom left, -5 possible neighbors)
+                        //console.log(`this is the bottom left corner`);
+                        totalNeighbors = 3;
+                        if (distTable[i-1][j] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i][j+1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i][j+1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i-1][j+1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j+1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
                     }
-                    else if (distTable[i][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
+                    else if (i+1 == tableDimensions.value && j+1 == tableDimensions.value){//corner case (bottom right, -5 pos neighbors)
+                        //console.log(`this is the bottom right corner`);
+                        totalNeighbors = 3;
+                        if (distTable[i-1][j] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i][j-1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i][j-1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i-1][j-1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j-1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
                     }
-
-                    if (distTable[i+1][j+1] == distTable[i][j]){
-                        coolNeighbors++;
+                    else if (i-1 < 0 || i + 1 == tableDimensions.value){//we are on an i edge (-3 possible neighbors)
+                        //console.log(`this is an i edge index`);
+                        totalNeighbors = 5;
+                        if (i-1<0){//we are in the top row
+                            if (distTable[i][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                        }
+                        else{//we are in the bottom row
+                            if (distTable[i][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i-1][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i-1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i-1][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                        }
                     }
-                    else if (distTable[i+1][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
+                    else if (j-1 < 0 || j+1 == tableDimensions.value){//we are on a j edge (-3 possible neighbors)
+                        //console.log(`this is a j edge`);
+                        totalNeighbors = 5;
+                        if (j-1<0){//we are in the left most column
+                            if (distTable[i-1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i-1][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j+1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j+1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                        }
+                        else{//we are in the right most column
+                            if (distTable[i-1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i-1][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i-1][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                            if (distTable[i+1][j-1] == distTable[i][j]){
+                                coolNeighbors++;
+                            }
+                            else if (distTable[i+1][j-1] == `#FFFFFF`){
+                                totalNeighbors--;
+                            }
+                        }
                     }
-                }
-                else if (i-1<0 && j+1 == tableDimensions.value){//corner case (top right, -5 possible neighbors)
-                    //console.log(`this is the top right corner`);
-                    totalNeighbors = 3;
-                    if (distTable[i][j-1] == distTable[i][j]){//if the neighbor is the same increment cool neighbors
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i][j-1] == `#FFFFFF`){//if neighboring a vacant spot decrement total neighbors
-                        totalNeighbors--;
-                    }
-
-                    if (distTable[i+1][j] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i+1][j] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-
-                    if (distTable[i+1][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i+1][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                }
-                else if (i+1 == tableDimensions.value && j-1 < 0){//corner case (bottom left, -5 possible neighbors)
-                    //console.log(`this is the bottom left corner`);
-                    totalNeighbors = 3;
-                    if (distTable[i-1][j] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i][j+1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i-1][j+1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                }
-                else if (i+1 == tableDimensions.value && j+1 == tableDimensions.value){//corner case (bottom right, -5 pos neighbors)
-                    //console.log(`this is the bottom right corner`);
-                    totalNeighbors = 3;
-                    if (distTable[i-1][j] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i-1][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                }
-                else if (i-1 < 0 || i + 1 == tableDimensions.value){//we are on an i edge (-3 possible neighbors)
-                    //console.log(`this is an i edge index`);
-                    totalNeighbors = 5;
-                    if (i-1<0){//we are in the top row
+                    else{//if none of the other cases satisfied then it is a normal entry
+                        //console.log(`this is a normal entry`);
+                        totalNeighbors = 8;
+                        if (distTable[i-1][j-1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j-1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i-1][j] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
+                        if (distTable[i-1][j+1] == distTable[i][j]){
+                            coolNeighbors++;
+                        }
+                        else if (distTable[i-1][j+1] == `#FFFFFF`){
+                            totalNeighbors--;
+                        }
                         if (distTable[i][j-1] == distTable[i][j]){
                             coolNeighbors++;
                         }
@@ -320,180 +493,43 @@ runButton.addEventListener("click", async () => {
                         else if (distTable[i+1][j+1] == `#FFFFFF`){
                             totalNeighbors--;
                         }
-                    }
-                    else{//we are in the bottom row
-                        if (distTable[i][j-1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i][j-1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i][j+1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i][j+1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i-1][j-1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j-1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i-1][j] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i-1][j+1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j+1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                    }
-                }
-                else if (j-1 < 0 || j+1 == tableDimensions.value){//we are on a j edge (-3 possible neighbors)
-                    //console.log(`this is a j edge`);
-                    totalNeighbors = 5;
-                    if (j-1<0){//we are in the left most column
-                        if (distTable[i-1][j] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i+1][j] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i+1][j] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i-1][j+1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j+1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i][j+1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i][j+1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i+1][j+1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i+1][j+1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                    }
-                    else{//we are in the right most column
-                        if (distTable[i-1][j] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i+1][j] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i+1][j] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i-1][j-1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i-1][j-1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i][j-1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i][j-1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                        if (distTable[i+1][j-1] == distTable[i][j]){
-                            coolNeighbors++;
-                        }
-                        else if (distTable[i+1][j-1] == `#FFFFFF`){
-                            totalNeighbors--;
-                        }
-                    }
-                }
-                else{//if none of the other cases satisfied then it is a normal entry
-                    //console.log(`this is a normal entry`);
-                    totalNeighbors = 8;
-                    if (distTable[i-1][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i-1][j] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i-1][j+1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i-1][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i][j+1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i+1][j-1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i+1][j-1] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i+1][j] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i+1][j] == `#FFFFFF`){
-                        totalNeighbors--;
-                    }
-                    if (distTable[i+1][j+1] == distTable[i][j]){
-                        coolNeighbors++;
-                    }
-                    else if (distTable[i+1][j+1] == `#FFFFFF`){
-                        totalNeighbors--;
                     }
                 }
                 
-                //TODO: fix bug here to switch an unhappy entity with a vacant spot
                 if ((coolNeighbors / totalNeighbors)  < simThreshold){ //move to a random vacant spot
+                    console.log("moving distTable["+i+"]["+j+"]: " + distTable[i][j])
                     numMoves++;
-                    var newHome = Math.floor(Math.random() * vacantSpots.length) //get a random vacant spot
-                    distTable[vacantSpots[newHome].iIndex][vacantSpots[newHome].jIndex] = distTable[i][j]; //ISSUE HERE
-                    distTable[i][j] = "#FFFFFF";      //after morving the spot set the former location to vacant
-                    vacantSpots[newHome].iIndex = i;  //update the index we changed so it corresponds to the right loc
-                    vacantSpots[newHome].jIndex = j;
+                    console.log("numMoves new value: " + numMoves);
+                    var newHome = Math.floor(Math.random() * (vacantSpots.length-1)) //get a random vacant spot
+                    let vacantHolder = distTable[vacantSpots[newHome].iIndex][vacantSpots[newHome].jIndex]
+                    distTable[vacantSpots[newHome].iIndex][vacantSpots[newHome].jIndex] = distTable[i][j];
 
-                    //TODO: want to also update and show the move in the board on the html
+                    vacantSpots[newHome].iIndex = i;
+                    vacantSpots[newHome].jIndex = j;
+                    
+                    distTable[i][j] = vacantHolder
+                    
                 }
                 
             }
         }
 
+        document.getElementById(`board`).innerHTML = "";            //clear the board for the new one
 
+        let tableNode = document.createElement('table');            //create an html table element
+        for (var i = 0; i < tableDimensionsVal; i++){               //for each row in the array
+            var rowNode = document.createElement('tr');             //create a new table row element
+            for (var j = 0; j < tableDimensionsVal; j++){           //for each data slot in the array
+                var dataNode = document.createElement('td');        //create a new table data element
+                dataNode.style.backgroundColor = distTable[i][j];   //set the color of the dataNode to the appropriate color
+                rowNode.appendChild(dataNode);                      //append the data to the row
+            }
+            tableNode.appendChild(rowNode);                         //append the row to the table
+        }
+        document.getElementById("board").appendChild(tableNode);    //append table to html div
 
         generation++;
-        if (numMoves == 0){ //no on moved in that round
+        if (numMoves == 0||generation>250){ //no on moved in that round or it takes too many generations
             console.log(`leaving loop`);
             converged++;
         }
